@@ -3,9 +3,9 @@
 
 <img width="1470" alt="Screenshot 2024-12-10 at 9 45 45 AM" src="https://github.com/user-attachments/assets/1bc50b85-b421-4122-8ba4-ae68b2b61432">
 
-# Welth: AI-Native Proactive Financial Copilot 🚀
+# Wealth: AI-Native Proactive Financial Copilot 🚀
 
-Welth is an intelligent, full-stack personal finance platform that shifts the paradigm from reactive expense tracking to proactive wealth management. By leveraging a decoupled microservices architecture, Welth actively monitors live transactions, forecasts recurring bills, evaluates the risk of hypothetical purchases, and provides empathetic, human-readable financial advice.
+Wealth is an intelligent, full-stack personal finance platform that shifts the paradigm from reactive expense tracking to proactive wealth management. By leveraging a decoupled microservices architecture, Welth actively monitors live transactions, forecasts recurring bills, evaluates the risk of hypothetical purchases, and provides empathetic, human-readable financial advice.
 
 ## 🧠 System Architecture
 
