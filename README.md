@@ -1,0 +1,56 @@
+# Full Stack AI Fianace Platform with Next JS, Supabase, Tailwind, Prisma, Inngest, ArcJet, Shadcn UI Tutorial 🔥🔥
+
+
+<img width="1470" alt="Screenshot 2024-12-10 at 9 45 45 AM" src="https://github.com/user-attachments/assets/1bc50b85-b421-4122-8ba4-ae68b2b61432">
+
+# Welth: AI-Native Proactive Financial Copilot 🚀
+
+Welth is an intelligent, full-stack personal finance platform that shifts the paradigm from reactive expense tracking to proactive wealth management. By leveraging a decoupled microservices architecture, Welth actively monitors live transactions, forecasts recurring bills, evaluates the risk of hypothetical purchases, and provides empathetic, human-readable financial advice.
+
+## 🧠 System Architecture
+
+The application is split into two specialized microservices:
+1. **The Web Brain (Next.js):** Handles the interactive user interface, authentication, and secure database routing.
+2. **The Math Brain (FastAPI):** A dedicated Python inference server that holds pre-trained Machine Learning models in memory for high-speed predictions.
+
+## 🛠️ Technical Stack
+
+* **Frontend:** Next.js (React), Tailwind CSS
+* **Backend:** Node.js (Server Actions), Python (FastAPI)
+* **Database & ORM:** PostgreSQL, Prisma ORM
+* **Authentication:** Clerk
+* **Artificial Intelligence Pipeline:**
+  * **Deep Learning (LSTM):** Time-series forecasting for predicting creeping subscription costs.
+  * **Reinforcement Learning (DQN):** A Deep Q-Network policy agent that evaluates the safety of hypothetical purchases against a dynamic daily burn rate.
+  * **Unsupervised Learning (K-Means):** Clusters users into peer-based financial personas based on spending habits.
+  * **Generative AI (Gemini 2.5):** Implements Server-Side Retrieval-Augmented Generation (RAG) to ground the conversational AI in the user's actual financial telemetry.
+
+## 🚀 Key Features
+
+* **Real-Time Dashboard:** Track liquid assets, monthly budgets, and daily pacing.
+* **Subscription Watcher:** Automatically detects and predicts next-cycle billing costs.
+* **The "What-If" Agent:** Test a purchase (e.g., "Can I afford a $500 flight?") and get an instant AI risk assessment.
+* **GenAI Financial Copilot:** Chat naturally with your finances. The AI knows your exact balance and runway without requiring manual data entry.
+
+## ⚙️ Local Development Setup
+
+### 1. Web Frontend (Next.js)
+\`\`\`bash
+npm install
+npx prisma generate
+npx prisma db push
+npm run dev
+\`\`\`
+
+### 2. AI Inference Engine (Python)
+Ensure your `.pkl` and `.keras` models are in the root directory.
+\`\`\`bash
+pip install fastapi uvicorn scikit-learn tensorflow
+uvicorn api:app --reload
+\`\`\`
+
+*Note: Environment variables (`DATABASE_URL`, `GEMINI_API_KEY`, `CLERK_SECRET_KEY`) must be configured locally in a `.env` file.*
+
+---
+**Developed by:** Dhruvil Galaiya
+
