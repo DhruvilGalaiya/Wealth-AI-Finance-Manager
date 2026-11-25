@@ -52,7 +52,7 @@ export function InsightsTour() {
         <div ref={listRef} role="tablist" aria-label="Insights" className="relative inline-flex gap-1 rounded-full border bg-card p-1" onKeyDown={onKey}>
           <span
             aria-hidden
-            className="absolute inset-y-1 left-0 rounded-full bg-foreground transition-[transform,width] duration-[240ms] ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none"
+            className="absolute inset-y-1 left-0 rounded-full bg-foreground transition-[transform,width] [transition-duration:240ms] [transition-timing-function:cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none"
             style={{ transform: `translateX(${bar.x}px)`, width: bar.w }}
           />
           {TABS.map((t, i) => (

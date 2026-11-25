@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { checkUser } from "@/lib/checkUser";
 import { AppShell } from "@/components/app/app-shell";
 import { CurrencyProvider } from "@/components/providers/currency-provider";
+import { db } from "@/lib/prisma";
 
 export default async function MainLayout({ children }) {
   const user = await checkUser();
@@ -13,9 +14,12 @@ export default async function MainLayout({ children }) {
     redirect("/sign-in");
   }
 
+  // Rules power the quick-add preview; small list, fetched once per navigation.
+  const rules = await db.rule.findMany({ where: { userId: user.id }, select: { match: true, category: true } });
+
   return (
     <CurrencyProvider currency={user.currency}>
-      <AppShell user={{ name: user.name, email: user.email }}>{children}</AppShell>
+      <AppShell user={{ name: user.name, email: user.email }} rules={rules}>{children}</AppShell>
     </CurrencyProvider>
   );
 }

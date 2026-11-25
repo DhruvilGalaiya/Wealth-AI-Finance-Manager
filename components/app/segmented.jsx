@@ -40,7 +40,7 @@ export function Segmented({ options, value, onChange, label, className, size = "
       {thumb && (
         <span
           aria-hidden
-          className="absolute inset-y-0.5 left-0 rounded-md bg-card shadow-sm ring-1 ring-border/60 transition-[transform,width] duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none"
+          className="absolute inset-y-0.5 left-0 rounded-md bg-card shadow-sm ring-1 ring-border/60 transition-[transform,width] duration-300 [transition-timing-function:cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none"
           style={{ width: thumb.w, transform: `translateX(${thumb.x}px)` }}
         />
       )}

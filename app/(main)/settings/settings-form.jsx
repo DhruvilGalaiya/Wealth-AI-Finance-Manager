@@ -61,7 +61,7 @@ export function SettingsForm({ currency: initialCurrency }) {
   };
 
   return (
-    <div className="max-w-2xl space-y-4">
+    <div className="space-y-4">
       <SectionCard
         title="Currency"
         description="Changes how amounts are displayed. Existing amounts aren't converted."

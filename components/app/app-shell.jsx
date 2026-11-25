@@ -11,7 +11,11 @@ import {
   Settings,
   Plus,
   Menu,
+  CalendarClock,
+  Lightbulb,
+  Sparkles,
 } from "lucide-react";
+import { QuickAddDialog, useQuickAddShortcut } from "@/components/app/quick-add";
 import { Logo } from "@/components/app/logo";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTitle, SheetContent } from "@/components/ui/dialog";
@@ -19,8 +23,10 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight, match: ["/transaction"] },
   { href: "/accounts", label: "Accounts", icon: Landmark, match: ["/account"] },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { href: "/plan", label: "Plan", icon: CalendarClock },
+  { href: "/insights", label: "Insights", icon: Lightbulb },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -29,7 +35,7 @@ function isActive(pathname, item) {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-function SidebarContent({ user, onNavigate }) {
+function SidebarContent({ user, onNavigate, onQuickAdd }) {
   const pathname = usePathname();
   const navRef = useRef(null);
   const [indicator, setIndicator] = useState(null);
@@ -46,10 +52,9 @@ function SidebarContent({ user, onNavigate }) {
       </div>
 
       <div className="px-3">
-        <Button asChild className="w-full justify-start" onClick={onNavigate}>
-          <Link href="/transaction/create">
-            <Plus /> Add transaction
-          </Link>
+        <Button className="w-full justify-start" onClick={onQuickAdd}>
+          <Sparkles /> Quick add
+          <kbd className="ml-auto rounded bg-primary-foreground/15 px-1.5 py-0.5 text-[11px] font-medium">⌘K</kbd>
         </Button>
       </div>
 
@@ -58,7 +63,7 @@ function SidebarContent({ user, onNavigate }) {
         {indicator && (
           <span
             aria-hidden
-            className="absolute inset-x-3 top-0 rounded-lg bg-card shadow-sm ring-1 ring-border transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none"
+            className="absolute inset-x-3 top-0 rounded-lg bg-card shadow-sm ring-1 ring-border transition-transform duration-300 [transition-timing-function:cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none"
             style={{ height: indicator.h, transform: `translateY(${indicator.y}px)` }}
           />
         )}
@@ -94,9 +99,15 @@ function SidebarContent({ user, onNavigate }) {
   );
 }
 
-export function AppShell({ user, children }) {
+export function AppShell({ user, rules = [], children }) {
   const [open, setOpen] = useState(false);
+  const [quickAdd, setQuickAdd] = useState(false);
   const pathname = usePathname();
+  useQuickAddShortcut(setQuickAdd);
+  const openQuickAdd = () => {
+    setOpen(false);
+    setQuickAdd(true);
+  };
 
   useEffect(() => setOpen(false), [pathname]);
 
@@ -104,7 +115,7 @@ export function AppShell({ user, children }) {
     <div className="min-h-dvh bg-background">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r bg-sidebar lg:block">
-        <SidebarContent user={user} />
+        <SidebarContent user={user} onQuickAdd={openQuickAdd} />
       </aside>
 
       {/* Mobile top bar */}
@@ -113,19 +124,19 @@ export function AppShell({ user, children }) {
           <Menu className="h-5 w-5" />
         </Button>
         <Logo href="/dashboard" />
-        <Button asChild size="icon" aria-label="Add transaction">
-          <Link href="/transaction/create">
-            <Plus />
-          </Link>
+        <Button size="icon" aria-label="Quick add a transaction" onClick={openQuickAdd}>
+          <Plus />
         </Button>
       </header>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <SheetContent aria-describedby={undefined}>
           <DialogTitle className="sr-only">Navigation</DialogTitle>
-          <SidebarContent user={user} onNavigate={() => setOpen(false)} />
+          <SidebarContent user={user} onNavigate={() => setOpen(false)} onQuickAdd={openQuickAdd} />
         </SheetContent>
       </Dialog>
+
+      <QuickAddDialog open={quickAdd} onOpenChange={setQuickAdd} rules={rules} />
 
       <main className="lg:pl-60">
         <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</div>

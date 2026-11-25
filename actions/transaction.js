@@ -9,6 +9,8 @@ import { serialize, serializeMany } from "@/lib/serialize";
 import { nextRecurringDate } from "@/lib/recurring";
 import { transactionInputSchema } from "@/app/lib/schema";
 import { defaultCategories } from "@/data/categories";
+import { categorize, isIncomeCategory } from "@/lib/rules";
+import { parseQuickAdd } from "@/lib/quick-add";
 
 const signed = (type, amount) => (type === "EXPENSE" ? -amount : amount);
 
@@ -47,10 +49,21 @@ function revalidateTransactionViews(...accountIds) {
   for (const id of new Set(accountIds)) revalidatePath(`/account/${id}`);
 }
 
+// A user rule re-sorts a transaction left as "Other" (rules never override a chosen category).
+async function applyUserRules(userId, input) {
+  if (input.category !== "other-expense" && input.category !== "other-income") return input;
+  const rules = await db.rule.findMany({ where: { userId } });
+  const hit = categorize(input.description, rules);
+  if (hit?.source === "rule" && isIncomeCategory(hit.category) === (input.type === "INCOME")) {
+    return { ...input, category: hit.category };
+  }
+  return input;
+}
+
 export async function createTransaction(data) {
   const user = await requireUser();
   await enforceRateLimit(user.clerkUserId);
-  const input = parseInput(data);
+  const input = await applyUserRules(user.id, parseInput(data));
 
   const transaction = await db.$transaction(async (tx) => {
     await assertAccountOwned(tx, input.accountId, user.id);
@@ -70,6 +83,34 @@ export async function createTransaction(data) {
 
   revalidateTransactionViews(transaction.accountId);
   return { success: true, data: serialize(transaction) };
+}
+
+// "coffee 4.50 yesterday" -> a saved transaction in the user's main account.
+export async function quickAddTransaction(text, accountId) {
+  try {
+    const user = await requireUser();
+    const rules = await db.rule.findMany({ where: { userId: user.id } });
+    const parsed = parseQuickAdd(String(text || "").slice(0, 200), { rules });
+    if (!parsed.valid) throw new Error("Include what it was and an amount, e.g. \"coffee 4.50\"");
+
+    const account =
+      (accountId && (await db.account.findUnique({ where: { id: accountId, userId: user.id } }))) ||
+      (await db.account.findFirst({ where: { userId: user.id }, orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }] }));
+    if (!account) throw new Error("Add an account first");
+
+    return await createTransaction({
+      type: parsed.type,
+      amount: parsed.amount,
+      description: parsed.description,
+      date: parsed.date,
+      accountId: account.id,
+      category: parsed.category,
+      isRecurring: Boolean(parsed.recurringInterval),
+      recurringInterval: parsed.recurringInterval,
+    });
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 }
 
 export async function getTransaction(id) {
