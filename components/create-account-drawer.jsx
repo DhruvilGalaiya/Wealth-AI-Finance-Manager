@@ -1,189 +1,107 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import useFetch from "@/hooks/use-fetch";
 import { toast } from "sonner";
-
+import useFetch from "@/hooks/use-fetch";
 import { Button } from "@/components/ui/button";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-  DrawerClose,
-} from "@/components/ui/drawer";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { createAccount } from "@/actions/dashboard";
 import { accountSchema } from "@/app/lib/schema";
+import { useCurrency } from "@/components/providers/currency-provider";
+import { CURRENCIES } from "@/lib/currency";
 
+function Field({ label, htmlFor, error, hint, children }) {
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={htmlFor} className="text-sm font-medium">{label}</label>
+      {children}
+      {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
+      {error && <p className="text-xs text-negative">{error}</p>}
+    </div>
+  );
+}
+
+// Kept the original export name so existing imports keep working.
 export function CreateAccountDrawer({ children }) {
   const [open, setOpen] = useState(false);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-    reset,
-  } = useForm({
+  const currency = useCurrency();
+  const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm({
     resolver: zodResolver(accountSchema),
-    defaultValues: {
-      name: "",
-      type: "CURRENT",
-      balance: "",
-      isDefault: false,
-    },
+    defaultValues: { name: "", type: "CURRENT", balance: "", isDefault: false },
   });
-
-  const {
-    loading: createAccountLoading,
-    fn: createAccountFn,
-    error,
-    data: newAccount,
-  } = useFetch(createAccount);
+  const { loading, fn } = useFetch(createAccount);
 
   const onSubmit = async (data) => {
-    await createAccountFn(data);
-  };
-
-  useEffect(() => {
-    if (newAccount) {
-      toast.success("Account created successfully");
+    const res = await fn(data);
+    if (res?.success) {
+      toast.success(`${res.data.name} added`);
       reset();
       setOpen(false);
     }
-  }, [newAccount, reset]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error.message || "Failed to create account");
-    }
-  }, [error]);
+  };
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger asChild>{children}</DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>Create New Account</DrawerTitle>
-        </DrawerHeader>
-        <div className="px-4 pb-4">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <label
-                htmlFor="name"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Account Name
-              </label>
-              <Input
-                id="name"
-                placeholder="e.g., Main Checking"
-                {...register("name")}
-              />
-              {errors.name && (
-                <p className="text-sm text-red-500">{errors.name.message}</p>
-              )}
-            </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add an account</DialogTitle>
+          <DialogDescription>Track a bank account by entering its current balance.</DialogDescription>
+        </DialogHeader>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="type"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Account Type
-              </label>
-              <Select
-                onValueChange={(value) => setValue("type", value)}
-                defaultValue={watch("type")}
-              >
-                <SelectTrigger id="type">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <Field label="Account name" htmlFor="name" error={errors.name?.message}>
+            <Input id="name" placeholder="e.g. Everyday checking" autoComplete="off" {...register("name")} />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Type" htmlFor="type" error={errors.type?.message}>
+              <Select value={watch("type")} onValueChange={(v) => setValue("type", v)}>
+                <SelectTrigger id="type"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CURRENT">Current</SelectItem>
+                  <SelectItem value="CURRENT">Checking</SelectItem>
                   <SelectItem value="SAVINGS">Savings</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.type && (
-                <p className="text-sm text-red-500">{errors.type.message}</p>
-              )}
-            </div>
+            </Field>
+            <Field label={`Balance (${CURRENCIES[currency]?.symbol})`} htmlFor="balance" error={errors.balance?.message}>
+              <Input id="balance" type="number" inputMode="decimal" step="0.01" placeholder="0.00" {...register("balance")} />
+            </Field>
+          </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="balance"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Initial Balance
-              </label>
-              <Input
-                id="balance"
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                {...register("balance")}
-              />
-              {errors.balance && (
-                <p className="text-sm text-red-500">{errors.balance.message}</p>
-              )}
-            </div>
+          <label htmlFor="isDefault" className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border p-3">
+            <span>
+              <span className="block text-sm font-medium">Make this my main account</span>
+              <span className="block text-xs text-muted-foreground">Selected by default for new transactions and budget tracking.</span>
+            </span>
+            <Switch id="isDefault" checked={watch("isDefault")} onCheckedChange={(c) => setValue("isDefault", c)} />
+          </label>
 
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <label
-                  htmlFor="isDefault"
-                  className="text-base font-medium cursor-pointer"
-                >
-                  Set as Default
-                </label>
-                <p className="text-sm text-muted-foreground">
-                  This account will be selected by default for transactions
-                </p>
-              </div>
-              <Switch
-                id="isDefault"
-                checked={watch("isDefault")}
-                onCheckedChange={(checked) => setValue("isDefault", checked)}
-              />
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <DrawerClose asChild>
-                <Button type="button" variant="outline" className="flex-1">
-                  Cancel
-                </Button>
-              </DrawerClose>
-              <Button
-                type="submit"
-                className="flex-1"
-                disabled={createAccountLoading}
-              >
-                {createAccountLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  "Create Account"
-                )}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </DrawerContent>
-    </Drawer>
+          <div className="flex justify-end gap-2 pt-2">
+            <DialogClose asChild>
+              <Button type="button" variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="animate-spin" />}
+              {loading ? "Adding…" : "Add account"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,131 +1,77 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import Image from "next/image";
-import {
-  featuresData,
-  howItWorksData,
-  statsData,
-  testimonialsData,
-} from "@/data/landing";
-import HeroSection from "@/components/hero";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import Header from "@/components/header";
+import HeroSection from "@/components/hero";
+import { Logo } from "@/components/app/logo";
+import { Button } from "@/components/ui/button";
+import { featuresData, howItWorksData } from "@/data/landing";
+import { checkUser } from "@/lib/checkUser";
 
-const LandingPage = () => {
+export default async function LandingPage() {
+  await checkUser(); // creates the DB user on first sign-in
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <HeroSection />
+    <div className="min-h-dvh bg-background">
+      <Header />
+      <main>
+        <HeroSection />
 
-      {/* Stats Section */}
-      <section className="py-20 bg-blue-50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {statsData.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2">
-                  {stat.value}
+        <section id="features" className="border-t bg-card/50 py-20 sm:py-24">
+          <div className="container">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-semibold tracking-tight">Simple tools, done properly</h2>
+              <p className="mt-3 text-muted-foreground">The essentials for staying on top of your money — without spreadsheets.</p>
+            </div>
+            <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border bg-border sm:grid-cols-2 lg:grid-cols-3">
+              {featuresData.map((f) => (
+                <div key={f.title} className="bg-card p-6">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <f.icon className="h-5 w-5" />
+                  </span>
+                  <h3 className="mt-4 font-semibold">{f.title}</h3>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{f.description}</p>
                 </div>
-                <div className="text-gray-600">{stat.label}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            Everything you need to manage your finances
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuresData.map((feature, index) => (
-              <Card className="p-6" key={index}>
-                <CardContent className="space-y-4 pt-4">
-                  {feature.icon}
-                  <h3 className="text-xl font-semibold">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+        <section id="how-it-works" className="py-20 sm:py-24">
+          <div className="container">
+            <h2 className="text-center text-3xl font-semibold tracking-tight">Up and running in minutes</h2>
+            <ol className="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-3">
+              {howItWorksData.map((step, i) => (
+                <li key={step.title} className="rounded-2xl border bg-card p-6">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
+                    {i + 1}
+                  </span>
+                  <h3 className="mt-4 font-semibold">{step.title}</h3>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{step.description}</p>
+                </li>
+              ))}
+            </ol>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* How It Works Section */}
-      <section className="py-20 bg-blue-50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-16">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {howItWorksData.map((step, index) => (
-              <div key={index} className="text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  {step.icon}
-                </div>
-                <h3 className="text-xl font-semibold mb-4">{step.title}</h3>
-                <p className="text-gray-600">{step.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-20">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-16">
-            What Our Users Say
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonialsData.map((testimonial, index) => (
-              <Card key={index} className="p-6">
-                <CardContent className="pt-4">
-                  <div className="flex items-center mb-4">
-                    <Image
-                      src={testimonial.image}
-                      alt={testimonial.name}
-                      width={40}
-                      height={40}
-                      className="rounded-full"
-                    />
-                    <div className="ml-4">
-                      <div className="font-semibold">{testimonial.name}</div>
-                      <div className="text-sm text-gray-600">
-                        {testimonial.role}
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-gray-600">{testimonial.quote}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-blue-600">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to Take Control of Your Finances?
-          </h2>
-          <p className="text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of users who are already managing their finances
-            smarter with Welth
-          </p>
-          <Link href="/dashboard">
-            <Button
-              size="lg"
-              className="bg-white text-blue-600 hover:bg-blue-50 animate-bounce"
-            >
-              Start Free Trial
+        <section className="container pb-20 sm:pb-24">
+          <div className="rounded-3xl bg-primary px-6 py-14 text-center text-primary-foreground sm:px-12">
+            <h2 className="text-3xl font-semibold tracking-tight">Take control of your money today</h2>
+            <p className="mx-auto mt-3 max-w-lg text-primary-foreground/80">
+              Free to use. Add an account and see your first insights in under five minutes.
+            </p>
+            <Button asChild size="lg" variant="secondary" className="mt-8">
+              <Link href="/dashboard">Create your account <ArrowRight /></Link>
             </Button>
-          </Link>
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t py-8">
+        <div className="container flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
+          <Logo />
+          <p>© {new Date().getFullYear()} Welth. Built by Dhruvil Galaiya.</p>
         </div>
-      </section>
+      </footer>
     </div>
   );
-};
-
-export default LandingPage;
+}

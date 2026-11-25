@@ -1,79 +1,33 @@
-import React from "react";
-import { Button } from "./ui/button";
-import { PenBox, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-import { checkUser } from "@/lib/checkUser";
-import Image from "next/image";
+import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/app/logo";
 
-const Header = async () => {
-  await checkUser();
-
+export default function Header() {
   return (
-    <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b">
-      <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/">
-          <Image
-            src={"/logo.png"}
-            alt="Welth Logo"
-            width={200}
-            height={60}
-            className="h-12 w-auto object-contain"
-          />
-        </Link>
-
-        {/* Navigation Links - Different for signed in/out users */}
-        <div className="hidden md:flex items-center space-x-8">
-          <SignedOut>
-            <a href="#features" className="text-gray-600 hover:text-blue-600">
-              Features
-            </a>
-            <a
-              href="#testimonials"
-              className="text-gray-600 hover:text-blue-600"
-            >
-              Testimonials
-            </a>
-          </SignedOut>
+    <header className="sticky top-0 z-40 border-b border-transparent bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <nav className="container flex h-16 items-center justify-between" aria-label="Main">
+        <Logo />
+        <div className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
+          <a href="#features" className="hover:text-foreground">Features</a>
+          <a href="#how-it-works" className="hover:text-foreground">How it works</a>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center space-x-4">
-          <SignedIn>
-            <Link
-              href="/dashboard"
-              className="text-gray-600 hover:text-blue-600 flex items-center gap-2"
-            >
-              <Button variant="outline">
-                <LayoutDashboard size={18} />
-                <span className="hidden md:inline">Dashboard</span>
-              </Button>
-            </Link>
-            <a href="/transaction/create">
-              <Button className="flex items-center gap-2">
-                <PenBox size={18} />
-                <span className="hidden md:inline">Add Transaction</span>
-              </Button>
-            </a>
-          </SignedIn>
+        <div className="flex items-center gap-2">
           <SignedOut>
             <SignInButton forceRedirectUrl="/dashboard">
-              <Button variant="outline">Login</Button>
+              <Button variant="ghost">Log in</Button>
             </SignInButton>
+            <SignUpButton forceRedirectUrl="/dashboard">
+              <Button>Get started</Button>
+            </SignUpButton>
           </SignedOut>
           <SignedIn>
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: "w-10 h-10",
-                },
-              }}
-            />
+            <Button asChild>
+              <Link href="/dashboard">Open dashboard</Link>
+            </Button>
           </SignedIn>
         </div>
       </nav>
     </header>
   );
-};
-
-export default Header;
+}
