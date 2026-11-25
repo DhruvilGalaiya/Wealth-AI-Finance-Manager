@@ -34,22 +34,35 @@ The application is split into two specialized microservices:
 
 ## ⚙️ Local Development Setup
 
-### 1. Web Frontend (Next.js)
-\`\`\`bash
+### 1. Environment
+Copy `.env.example` to `.env` and fill in your keys (Postgres/Supabase, Clerk, Gemini, Resend, Arcjet).
+
+### 2. Web app (Next.js)
+```bash
 npm install
-npx prisma generate
-npx prisma db push
-npm run dev
-\`\`\`
+npx prisma migrate deploy   # applies migrations, incl. the user currency column
+npm run dev                 # http://localhost:3000
+```
 
-### 2. AI Inference Engine (Python)
-Ensure your `.pkl` and `.keras` models are in the root directory.
-\`\`\`bash
-pip install fastapi uvicorn scikit-learn tensorflow
-uvicorn api:app --reload
-\`\`\`
+Optional demo data (development only): sign in, create an account, then run
+`fetch("/api/seed", { method: "POST" })` from the browser console on any app page.
 
-*Note: Environment variables (`DATABASE_URL`, `GEMINI_API_KEY`, `CLERK_SECRET_KEY`) must be configured locally in a `.env` file.*
+### 3. ML inference service (Python)
+The Next.js server calls this service server-side via `PYTHON_API_URL`. If it is offline, the dashboard falls back to rule-based insights.
+```bash
+pip install -r requirements.docker.txt
+uvicorn api:app --reload --port 8000
+```
+
+### 4. Background jobs (Inngest)
+```bash
+npx inngest-cli@latest dev   # recurring transactions, budget alerts, monthly reports
+```
+
+### Docker
+```bash
+docker compose up --build
+```
 
 ---
 **Developed by:** Dhruvil Galaiya

@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+numpy
+pandas
+scikit-learn
+joblib
+tensorflow==2.15.1
+stable-baselines3
+gymnasium

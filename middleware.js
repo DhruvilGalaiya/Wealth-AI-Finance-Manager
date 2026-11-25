@@ -5,7 +5,10 @@ import { NextResponse } from "next/server";
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
   "/account(.*)",
+  "/accounts(.*)",
   "/transaction(.*)",
+  "/transactions(.*)",
+  "/settings(.*)",
 ]);
 
 // Create Arcjet middleware

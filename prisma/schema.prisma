@@ -14,6 +14,7 @@ model User {
   email         String    @unique
   name          String?
   imageUrl      String?
+  currency      String    @default("USD")
   transactions  Transaction[]
   accounts      Account[]
   budgets       Budget[]
@@ -60,6 +61,7 @@ model Transaction {
   updatedAt        DateTime          @updatedAt
 
   @@index([userId])
+  @@index([userId, date])
   @@index([accountId])
   @@map("transactions")
 }
