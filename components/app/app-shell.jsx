@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
@@ -31,6 +31,13 @@ function isActive(pathname, item) {
 
 function SidebarContent({ user, onNavigate }) {
   const pathname = usePathname();
+  const navRef = useRef(null);
+  const [indicator, setIndicator] = useState(null);
+
+  useLayoutEffect(() => {
+    const el = navRef.current?.querySelector("[data-active]");
+    setIndicator(el ? { y: el.offsetTop, h: el.offsetHeight } : null);
+  }, [pathname]);
 
   return (
     <div className="flex h-full flex-col">
@@ -46,7 +53,15 @@ function SidebarContent({ user, onNavigate }) {
         </Button>
       </div>
 
-      <nav className="mt-4 flex-1 space-y-0.5 px-3" aria-label="Main">
+      <nav ref={navRef} className="relative mt-4 flex-1 space-y-0.5 px-3" aria-label="Main">
+        {/* One indicator that slides to the current page instead of jumping */}
+        {indicator && (
+          <span
+            aria-hidden
+            className="absolute inset-x-3 top-0 rounded-lg bg-card shadow-sm ring-1 ring-border transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none"
+            style={{ height: indicator.h, transform: `translateY(${indicator.y}px)` }}
+          />
+        )}
         {NAV.map((item) => {
           const active = isActive(pathname, item);
           return (
@@ -54,15 +69,14 @@ function SidebarContent({ user, onNavigate }) {
               key={item.href}
               href={item.href}
               onClick={onNavigate}
+              data-active={active || undefined}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-card text-foreground shadow-sm ring-1 ring-border"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150",
+                active ? "text-foreground" : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
               )}
             >
-              <item.icon className={cn("h-4 w-4", active && "text-primary")} />
+              <item.icon className={cn("h-4 w-4 transition-colors", active && "text-primary")} />
               {item.label}
             </Link>
           );
@@ -94,7 +108,7 @@ export function AppShell({ user, children }) {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-background/85 px-4 backdrop-blur lg:hidden">
+      <header className="material sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/60 px-4 lg:hidden">
         <Button variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label="Open menu">
           <Menu className="h-5 w-5" />
         </Button>

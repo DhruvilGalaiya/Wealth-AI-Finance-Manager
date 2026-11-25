@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { createTransaction, updateTransaction } from "@/actions/transaction";
 import { transactionSchema } from "@/app/lib/schema";
 import { ReceiptScanner } from "./recipt-scanner";
+import { Segmented } from "@/components/app/segmented";
 
 function Field({ label, error, children, className }) {
   return (
@@ -98,26 +99,16 @@ export function AddTransactionForm({ accounts, categories, editMode = false, edi
 
       <SectionCard bodyClassName="space-y-5">
         {/* Type toggle */}
-        <div className="grid grid-cols-2 rounded-lg border bg-muted/50 p-1" role="radiogroup" aria-label="Transaction type">
-          {[
-            ["EXPENSE", "Expense"],
-            ["INCOME", "Income"],
-          ].map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              role="radio"
-              aria-checked={type === value}
-              onClick={() => setType(value)}
-              className={cn(
-                "rounded-md py-1.5 text-sm font-medium transition-colors",
-                type === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          label="Transaction type"
+          className="w-full"
+          value={type}
+          onChange={setType}
+          options={[
+            { value: "EXPENSE", label: "Expense" },
+            { value: "INCOME", label: "Income" },
+          ]}
+        />
 
         {/* Amount */}
         <Field label="Amount" error={errors.amount?.message}>

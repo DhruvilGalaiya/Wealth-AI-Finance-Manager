@@ -67,3 +67,5 @@ __pycache__/
 .venv/
 venv/
 env/
+# taste-skill working files (screenshots, browser profile)
+/.taste-skill/

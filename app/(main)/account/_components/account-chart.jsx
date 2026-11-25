@@ -6,6 +6,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { SectionCard } from "@/components/app/section-card";
 import { useMoney } from "@/components/providers/currency-provider";
 import { cn } from "@/lib/utils";
+import { Segmented } from "@/components/app/segmented";
 
 const RANGES = {
   "1M": { label: "1M", days: 30, bucket: "day" },
@@ -58,22 +59,13 @@ export function AccountChart({ transactions }) {
     <SectionCard
       title="Cash flow"
       action={
-        <div className="inline-flex rounded-lg border bg-muted/50 p-0.5" role="tablist" aria-label="Date range">
-          {Object.entries(RANGES).map(([key, r]) => (
-            <button
-              key={key}
-              role="tab"
-              aria-selected={range === key}
-              onClick={() => setRange(key)}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                range === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          label="Date range"
+          size="sm"
+          value={range}
+          onChange={setRange}
+          options={Object.entries(RANGES).map(([value, r]) => ({ value, label: r.label }))}
+        />
       }
     >
       <dl className="mb-4 grid grid-cols-3 gap-4">

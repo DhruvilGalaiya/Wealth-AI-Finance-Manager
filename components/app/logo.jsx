@@ -21,7 +21,7 @@ export function LogoMark({ className }) {
 
 export function Logo({ href = "/", className }) {
   return (
-    <Link href={href} className={cn("inline-flex items-center gap-2", className)} aria-label="Welth home">
+    <Link href={href} className={cn("inline-flex min-h-11 items-center gap-2", className)} aria-label="Welth home">
       <LogoMark />
       <span className="text-[17px] font-semibold tracking-tight">welth</span>
     </Link>
