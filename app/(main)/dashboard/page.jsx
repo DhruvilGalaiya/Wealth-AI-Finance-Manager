@@ -1,155 +1,168 @@
-import { getUserAccounts } from "@/actions/dashboard";
-import { getDashboardData } from "@/actions/dashboard";
+import Link from "next/link";
+import { format, isToday, isTomorrow } from "date-fns";
+import { ArrowDownRight, ArrowUpRight, Plus, Receipt, Wallet, CalendarClock } from "lucide-react";
+import { getDashboardData, getUserAccounts } from "@/actions/dashboard";
 import { getCurrentBudget } from "@/actions/budget";
-import { AccountCard } from "./_components/account-card";
+import { getGoals, getRecurringTemplates } from "@/actions/goals";
+import { checkUser } from "@/lib/checkUser";
+import { formatMoney } from "@/lib/currency";
+import { balanceHistory, budgetPacing, categoryBreakdown, detectAnomalies, monthTotals } from "@/lib/finance";
+import { projectBalance, upcomingOccurrences } from "@/lib/forecast";
+import { buildAttention } from "@/lib/attention";
+import { PageHeader } from "@/components/app/page-header";
+import { SectionCard, EmptyState } from "@/components/app/section-card";
+import { Money } from "@/components/app/money";
+import { TransactionRow } from "@/components/app/transaction-row";
+import { CategoryIcon, getCategory } from "@/components/app/category-icon";
 import { CreateAccountDrawer } from "@/components/create-account-drawer";
-import { BudgetProgress } from "./_components/budget-progress";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus } from "lucide-react";
-import { DashboardOverview } from "./_components/transaction-overview";
-import { runPolicyEngine } from "@/lib/rl-policy-engine";
-import { WhatIfAgent } from "./_components/what-if-agent";
-import { DashboardStats } from "./_components/dashboard-stats";
+import { Button } from "@/components/ui/button";
+import { BalanceChart } from "./_components/charts";
+import { BudgetCard } from "./_components/budget-card";
+import { SpendingCard } from "./_components/spending-card";
 import { GenerateReportButton } from "./_components/generate-report-button";
-import { detectAnomalies } from "@/lib/anomaly-detector";
-import { DailyBurnTracker } from "./_components/daily-burn-tracker"; 
-import { FinancialPersona } from "./_components/financial-persona";
-import { SubscriptionPredictor } from "./_components/subscription-predictor";
-import { AiCopilot } from "./_components/ai-copilot"; // <-- NEW IMPORT
+import { AttentionFeed } from "./_components/attention";
+
+export const metadata = { title: "Dashboard" };
+
+function greeting(name) {
+  const h = new Date().getHours();
+  const part = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  const first = name?.split(" ")[0];
+  return first ? `${part}, ${first}` : part;
+}
+
+const when = (d) => (isToday(d) ? "Today" : isTomorrow(d) ? "Tomorrow" : format(d, "EEE, MMM d"));
 
 export default async function DashboardPage() {
-  const [accounts, transactions] = await Promise.all([
+  const [user, accounts, transactions, templates, goals] = await Promise.all([
+    checkUser(),
     getUserAccounts(),
     getDashboardData(),
+    getRecurringTemplates(),
+    getGoals(),
   ]);
 
-  const defaultAccount = accounts?.find((account) => account.isDefault);
-  let budgetData = null;
-  if (defaultAccount) {
-    budgetData = await getCurrentBudget(defaultAccount.id);
+  const header = (
+    <PageHeader
+      title={greeting(user?.name)}
+      description={format(new Date(), "EEEE, MMMM d")}
+      actions={accounts.length > 0 && <GenerateReportButton />}
+    />
+  );
+
+  if (accounts.length === 0) {
+    return (
+      <>
+        {header}
+        <SectionCard>
+          <EmptyState
+            icon={Wallet}
+            title="Add your first account to get started"
+            description="Enter the balance of a checking or savings account. Then add transactions, set a budget and get insights."
+            action={<CreateAccountDrawer><Button><Plus /> Add account</Button></CreateAccountDrawer>}
+            className="py-14"
+          />
+        </SectionCard>
+      </>
+    );
   }
 
-  // --- AIML ENGINE DATA GATHERING ---
-  const totalLiquidAssets = accounts?.reduce((sum, account) => sum + (Number(account.balance) || 0), 0) || 0;
-  const currentMonthStr = new Date().toISOString().slice(0, 7);
-  const monthlyExpenses = transactions?.filter(t => {
-    const isExpense = t.type?.toLowerCase() === 'expense' || t.type === 'EXPENSE';
-    const txMonthStr = new Date(t.date || t.createdAt).toISOString().slice(0, 7);
-    return isExpense && txMonthStr === currentMonthStr;
-  }).reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+  const defaultAccount = accounts.find((a) => a.isDefault) || accounts[0];
+  const budgetData = await getCurrentBudget(defaultAccount.id);
+  const currency = user?.currency || "USD";
+  const money = (n) => formatMoney(n, currency);
 
-  const aiInsights = runPolicyEngine(totalLiquidAssets, monthlyExpenses);
-  const anomalies = detectAnomalies(transactions || []);
-
-  // --- GATHER CONTEXT FOR GEMINI ---
-  const geminiContext = {
-    assets: totalLiquidAssets,
-    runwayDays: aiInsights.runwayDays,
-    budget: budgetData?.budget?.amount || 0,
-    spent: budgetData?.currentExpenses || 0
-  };
+  const totalCash = accounts.reduce((s, a) => s + a.balance, 0);
+  const month = monthTotals(transactions);
+  const history = balanceHistory(transactions, totalCash, 90);
+  const change30 = totalCash - (history[history.length - 31]?.balance ?? totalCash);
+  const budget = budgetData?.budget?.amount || 0;
+  const pacing = budget > 0 ? budgetPacing(budgetData.currentExpenses, budget) : null;
+  const upcoming = upcomingOccurrences(templates, 30);
+  const projection = projectBalance(totalCash, upcoming, 30);
+  const attention = buildAttention({
+    pacing,
+    budget,
+    upcoming,
+    projection,
+    anomalies: detectAnomalies(transactions),
+    uncategorized: transactions.filter((t) => t.category === "other-expense" || t.category === "other-income").length,
+    goals,
+    money,
+  });
+  const accountNames = Object.fromEntries(accounts.map((a) => [a.id, a.name]));
+  const nextBills = upcoming.filter((o) => o.type === "EXPENSE").slice(0, 4);
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-end">
-        <GenerateReportButton />
-      </div>
+    <>
+      {header}
+      <AttentionFeed items={attention} />
 
-      <DashboardStats transactions={transactions} />
-
-      <BudgetProgress
-        initialBudget={budgetData?.budget}
-        currentExpenses={budgetData?.currentExpenses || 0}
-      />
-
-      {/* --- THE AI COMMAND CENTER --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        
-        {/* Left Column: Static Analytics */}
-        <div className="flex flex-col gap-4">
-          <div className="p-6 rounded-lg border bg-white shadow-sm flex flex-col justify-center h-full">
-            <h2 className="text-lg font-bold text-gray-800">Liquidity Runway</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              If your income drops to zero, how long do you survive?
-            </p>
-            <div className="flex items-baseline gap-2 mt-auto">
-              <span className="text-5xl font-extrabold text-blue-600">{aiInsights.runwayDays}</span>
-              <span className="text-gray-600 font-bold text-lg">Days</span>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <SectionCard className="lg:col-span-2" bodyClassName="pb-3">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Total balance</p>
+              <p className="mt-1 text-4xl font-semibold tracking-[-0.02em]"><Money amount={totalCash} /></p>
+              <p className="mt-1.5 flex items-center gap-1 text-sm">
+                {change30 >= 0 ? <ArrowUpRight className="h-4 w-4 text-positive" /> : <ArrowDownRight className="h-4 w-4 text-negative" />}
+                <Money amount={Math.abs(change30)} className={change30 >= 0 ? "text-positive" : "text-negative"} />
+                <span className="text-muted-foreground">in 30 days</span>
+              </p>
             </div>
+            <Link href="/accounts" className="text-sm text-muted-foreground hover:text-foreground">
+              {accounts.length} account{accounts.length > 1 ? "s" : ""}
+            </Link>
           </div>
-        </div>
+          <div className="-mx-1 mt-4"><BalanceChart data={history} /></div>
+        </SectionCard>
 
-        {/* Right Column: Interactive Agent */}
-        <WhatIfAgent 
-          accounts={accounts} 
-          transactions={transactions} 
-          budgetData={budgetData} 
-        />
-        
-      </div>
+        <BudgetCard budget={budget} spent={budgetData?.currentExpenses || 0} pacing={pacing} accountName={accounts.length > 1 ? defaultAccount.name : null} />
 
-      <DashboardOverview
-        accounts={accounts}
-        transactions={transactions || []}
-      />
+        <SectionCard
+          title="Recent transactions"
+          action={<Link href="/transactions" className="text-sm font-medium text-primary hover:underline">See all</Link>}
+          className="lg:col-span-2"
+          bodyClassName="py-1"
+        >
+          {transactions.length === 0 ? (
+            <EmptyState icon={Receipt} title="No transactions yet" description="Press ⌘K and type something like “coffee 4.50”." />
+          ) : (
+            <ul className="divide-y">
+              {transactions.slice(0, 6).map((t) => (
+                <TransactionRow key={t.id} transaction={t} accountName={accounts.length > 1 ? accountNames[t.accountId] : null} />
+              ))}
+            </ul>
+          )}
+        </SectionCard>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <CreateAccountDrawer>
-          <Card className="hover:shadow-md transition-shadow cursor-pointer border-dashed">
-            <CardContent className="flex flex-col items-center justify-center text-muted-foreground h-full pt-5">
-              <Plus className="h-10 w-10 mb-2" />
-              <p className="text-sm font-medium">Add New Account</p>
-            </CardContent>
-          </Card>
-        </CreateAccountDrawer>
-        {accounts.length > 0 &&
-          accounts?.map((account) => (
-            <AccountCard key={account.id} account={account} />
-          ))}
-      </div>
-
-      {/* Analytics & Machine Learning Block */}
         <div className="flex flex-col gap-4">
-          <DailyBurnTracker 
-            currentSpent={budgetData?.currentExpenses || 0} 
-            budgetLimit={budgetData?.budget?.amount || 0} 
-          />
-          <FinancialPersona 
-             currentExpenses={budgetData?.currentExpenses || 0} 
-             budgetLimit={budgetData?.budget?.amount || 0} 
-          />
-          <SubscriptionPredictor />
+          <SpendingCard categories={categoryBreakdown(transactions).slice(0, 5)} total={month.expenses} compact />
+
+          <SectionCard
+            title="Coming up"
+            action={<Link href="/plan" className="text-sm font-medium text-primary hover:underline">Plan</Link>}
+            bodyClassName="py-2"
+          >
+            {nextBills.length === 0 ? (
+              <p className="flex items-center gap-2 py-2 text-sm text-muted-foreground"><CalendarClock className="h-4 w-4" /> No bills scheduled.</p>
+            ) : (
+              <ul>
+                {nextBills.map((o) => (
+                  <li key={o.id} className="flex items-center gap-3 py-2">
+                    <CategoryIcon category={o.category} className="h-8 w-8" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{o.description || getCategory(o.category).name}</p>
+                      <p className="text-xs text-muted-foreground">{when(new Date(o.date))}</p>
+                    </div>
+                    <Money amount={o.amount} className="text-sm font-medium" />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SectionCard>
         </div>
-
-      {/* AI ANOMALY ALERTS */}
-      {anomalies.length > 0 && (
-        <div className="bg-rose-50 border border-rose-200 rounded-lg p-6 mb-8 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="bg-rose-600 text-white text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">
-              AI Alert
-            </span>
-            <h3 className="text-lg font-bold text-rose-900">Spending Anomalies Detected</h3>
-          </div>
-          <p className="text-sm text-rose-700 mb-4">
-            Our statistical engine identified {anomalies.length} transaction(s) deviating significantly from your baseline.
-          </p>
-          <div className="space-y-2">
-            {anomalies.map((tx, idx) => (
-              <div key={idx} className="flex justify-between items-center bg-white p-3 rounded border border-rose-100">
-                <span className="font-medium text-gray-800">{tx.description || "Untitled Transaction"}</span>
-                <span className="font-bold text-rose-600">${tx.amount.toFixed(2)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-
-      {/* NEW: GEN-AI COPILOT CHAT */}
-      <div className="w-full">
-          <AiCopilot contextData={geminiContext} />
       </div>
-      {/* --------------------------- */}
-    </div>
+    </>
   );
 }

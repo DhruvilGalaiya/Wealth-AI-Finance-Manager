@@ -1,0 +1,69 @@
+/* Landing page motion and grounds (taste-skill motion tokens, written for this stack). */
+.landing {
+  --m-in: 150ms; --m-out: 120ms; --m-press: 90ms; --m-cycle: 3.2s;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --ease-enter: cubic-bezier(.22, 1, .36, 1);
+  /* variables the iris-opens moment reads */
+  --bg: hsl(var(--background));
+  --accent: hsl(var(--primary));
+  --r-lg: 1.25rem;
+  --surface: hsl(40 18% 92.5%);
+}
+.dark .landing { --surface: hsl(222 16% 11%); }
+.ground-surface { background: var(--surface); }
+
+/* Sections: one or two screens each at desktop sizes */
+.screen { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding-block: clamp(72px, 9vh, 112px); }
+.screen--2 { min-height: 200svh; }
+@media (max-width: 767px) { .screen { min-height: calc(100svh - 64px); padding-block: 56px; } .screen.pt-24 { padding-top: 88px; } }
+
+/* ---- Hover and press layer (fine pointer only) ---- */
+.m-btn { transition: transform var(--m-out) var(--ease), background-color var(--m-out) var(--ease), border-color var(--m-out) var(--ease); }
+.m-arrow { transition: transform var(--m-out) var(--ease); }
+.m-card { transition: transform 120ms var(--ease), border-color 120ms var(--ease), box-shadow 120ms var(--ease); }
+@media (hover: hover) and (pointer: fine) {
+  .m-btn:hover { transform: translateY(-1px); transition-duration: var(--m-in); }
+  .m-btn--xl:hover { transform: translateY(-2px); }
+  .m-btn:hover .m-arrow, a:hover > .m-arrow { transform: translateX(3px); transition-duration: var(--m-in); }
+  .m-card:hover { transform: translateY(-2px); border-color: hsl(var(--foreground) / .18); box-shadow: 0 12px 24px -12px hsl(var(--foreground) / .10); transition-duration: 180ms; }
+}
+.m-btn:active { transform: translateY(1px) scale(.985); transition-duration: var(--m-press); }
+
+/* drawn underline for nav and footer words */
+.m-link { position: relative; }
+.m-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: right; transition: transform var(--m-out) var(--ease); }
+@media (hover: hover) and (pointer: fine) { .m-link:hover::after { transform: scaleX(1); transform-origin: left; transition-duration: var(--m-in); } }
+.m-link:focus-visible::after { transform: scaleX(1); }
+
+/* ---- Hero entrance: once on load ---- */
+@keyframes m-rise { from { transform: translateY(105%); } to { transform: none; } }
+@keyframes m-fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes m-settle { from { transform: scale(.98); } to { transform: none; } }
+.enter-line { display: block; overflow: hidden; padding-bottom: .08em; margin-bottom: -.08em; }
+.enter-line > span { display: inline-block; animation: m-rise 700ms var(--ease-enter) both; }
+.enter-line:nth-child(2) > span { animation-delay: 80ms; }
+.enter-line:nth-child(3) > span { animation-delay: 160ms; }
+.enter-follow { animation: m-fade-up 520ms var(--ease-enter) both; animation-delay: calc(500ms + var(--i, 0) * 60ms); }
+.enter-media { animation: m-settle 900ms var(--ease-enter) both; }
+
+/* ---- Card loops (tech): 3.2 s, the last stretch holds the finished picture ---- */
+@keyframes loop-fill { 0% { transform: scaleX(.08); } 70%, 100% { transform: scaleX(1); } }
+@keyframes loop-scan { 0% { transform: translateY(0); opacity: 1; } 55% { transform: translateY(var(--scan-h, 120px)); opacity: 1; } 60%, 100% { opacity: 0; transform: translateY(var(--scan-h, 120px)); } }
+@keyframes loop-appear { 0%, 55% { opacity: .15; } 70%, 100% { opacity: 1; } }
+@keyframes loop-dot { 0%, 20% { transform: scale(.6); opacity: .35; } 35%, 100% { transform: scale(1); opacity: 1; } }
+.loop-fill { transform-origin: left; animation: loop-fill var(--m-cycle) var(--ease-enter) infinite; }
+.loop-scan { animation: loop-scan var(--m-cycle) linear infinite; }
+.loop-appear { animation: loop-appear var(--m-cycle) linear infinite; }
+.loop-dot { animation: loop-dot var(--m-cycle) var(--ease-enter) infinite; animation-delay: calc(var(--i, 0) * 180ms); }
+
+/* Collage crossfade */
+/* Collage set change: the old set leaves first, the new one arrives just after, so text never stacks */
+.collage-set { transition: opacity 250ms var(--ease); }
+.collage-set.is-shown { transition: opacity 450ms var(--ease) 250ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .enter-line > span, .enter-follow, .enter-media,
+  .loop-fill, .loop-scan, .loop-appear, .loop-dot { animation: none !important; }
+  .collage-set { transition: none; }
+  .m-btn, .m-card, .m-arrow { transition: none; }
+}

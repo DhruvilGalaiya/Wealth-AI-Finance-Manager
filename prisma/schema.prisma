@@ -14,9 +14,12 @@ model User {
   email         String    @unique
   name          String?
   imageUrl      String?
+  currency      String    @default("USD")
   transactions  Transaction[]
   accounts      Account[]
   budgets       Budget[]
+  rules         Rule[]
+  goals         Goal[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -60,6 +63,7 @@ model Transaction {
   updatedAt        DateTime          @updatedAt
 
   @@index([userId])
+  @@index([userId, date])
   @@index([accountId])
   @@map("transactions")
 }
@@ -76,6 +80,34 @@ model Budget {
 
   @@index([userId])
   @@map("budgets")
+}
+
+// Auto-categorize: a transaction whose description contains `match` gets `category`.
+model Rule {
+  id        String   @id @default(uuid())
+  match     String
+  category  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("rules")
+}
+
+model Goal {
+  id        String    @id @default(uuid())
+  name      String
+  target    Decimal
+  saved     Decimal   @default(0)
+  deadline  DateTime?
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("goals")
 }
 
 enum TransactionType {

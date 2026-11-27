@@ -1,0 +1,32 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wealth-ai-web
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      PYTHON_API_URL: http://ml-api:8000
+    depends_on:
+      - ml-api
+    restart: unless-stopped
+
+  ml-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.ml
+    container_name: wealth-ai-ml-api
+    platform: linux/amd64
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      PYTHONUNBUFFERED: "1"
+    restart: unless-stopped

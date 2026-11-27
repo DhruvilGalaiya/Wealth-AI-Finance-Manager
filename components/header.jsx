@@ -1,79 +1,39 @@
-import React from "react";
-import { Button } from "./ui/button";
-import { PenBox, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-import { checkUser } from "@/lib/checkUser";
-import Image from "next/image";
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { ArrowRight } from "lucide-react";
+import { Logo } from "@/components/app/logo";
 
-const Header = async () => {
-  await checkUser();
+export const PRIMARY_ACTION = "Start tracking free";
 
+const btn =
+  "m-btn inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-medium";
+
+export default function Header() {
   return (
-    <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b">
-      <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/">
-          <Image
-            src={"/logo.png"}
-            alt="Welth Logo"
-            width={200}
-            height={60}
-            className="h-12 w-auto object-contain"
-          />
-        </Link>
-
-        {/* Navigation Links - Different for signed in/out users */}
-        <div className="hidden md:flex items-center space-x-8">
-          <SignedOut>
-            <a href="#features" className="text-gray-600 hover:text-blue-600">
-              Features
-            </a>
-            <a
-              href="#testimonials"
-              className="text-gray-600 hover:text-blue-600"
-            >
-              Testimonials
-            </a>
-          </SignedOut>
+    <header className="fixed inset-x-0 top-0 z-40 border-b bg-background">
+      <nav className="container grid h-16 grid-cols-[1fr_auto] items-center md:grid-cols-3" aria-label="Main">
+        <Logo href="#top" />
+        <div className="hidden items-center justify-center gap-8 text-sm text-muted-foreground md:flex">
+          <a href="#features" className="m-link hover:text-foreground">Features</a>
+          <a href="#insights" className="m-link hover:text-foreground">Insights</a>
+          <a href="#faq" className="m-link hover:text-foreground">Questions</a>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center space-x-4">
-          <SignedIn>
-            <Link
-              href="/dashboard"
-              className="text-gray-600 hover:text-blue-600 flex items-center gap-2"
-            >
-              <Button variant="outline">
-                <LayoutDashboard size={18} />
-                <span className="hidden md:inline">Dashboard</span>
-              </Button>
-            </Link>
-            <a href="/transaction/create">
-              <Button className="flex items-center gap-2">
-                <PenBox size={18} />
-                <span className="hidden md:inline">Add Transaction</span>
-              </Button>
-            </a>
-          </SignedIn>
+        <div className="flex items-center justify-end gap-1">
           <SignedOut>
             <SignInButton forceRedirectUrl="/dashboard">
-              <Button variant="outline">Login</Button>
+              <button className={`${btn} text-muted-foreground hover:text-foreground max-sm:hidden`}>Log in</button>
             </SignInButton>
+            <Link href="/sign-up" className={`${btn} bg-primary text-primary-foreground hover:bg-primary/90`}>
+              {PRIMARY_ACTION} <ArrowRight className="m-arrow h-4 w-4" />
+            </Link>
           </SignedOut>
           <SignedIn>
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: "w-10 h-10",
-                },
-              }}
-            />
+            <Link href="/dashboard" className={`${btn} bg-primary text-primary-foreground hover:bg-primary/90`}>
+              Open your dashboard <ArrowRight className="m-arrow h-4 w-4" />
+            </Link>
           </SignedIn>
         </div>
       </nav>
     </header>
   );
-};
-
-export default Header;
+}

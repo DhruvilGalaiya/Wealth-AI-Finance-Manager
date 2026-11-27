@@ -5,7 +5,12 @@ import { NextResponse } from "next/server";
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
   "/account(.*)",
+  "/accounts(.*)",
   "/transaction(.*)",
+  "/transactions(.*)",
+  "/settings(.*)",
+  "/plan(.*)",
+  "/insights(.*)",
 ]);
 
 // Create Arcjet middleware
@@ -40,8 +45,9 @@ const clerk = clerkMiddleware(async (auth, req) => {
   return NextResponse.next();
 });
 
-// Chain middlewares - ArcJet runs first, then Clerk
-export default createMiddleware(aj, clerk);
+// Arcjet (bot + attack protection) runs first when configured, then Clerk.
+// Without ARCJET_KEY (e.g. local dev) Arcjet would reject every request.
+export default process.env.ARCJET_KEY ? createMiddleware(aj, clerk) : clerk;
 
 export const config = {
   matcher: [
